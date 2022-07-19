@@ -15,6 +15,7 @@ $$
 WSS_k =  \sum_{l=1}^k{\sum_{x_i \in {C_l}}{d^2(x_i, \overline{x_l})}}
 $$
 
+where, $k$ is the number of clusters and within each cluster $l$, $x_l$ is the centre of mass.
 
 ```{r}
 
