@@ -1,0 +1,21 @@
+---
+title: "chapter-clustering-validation"
+author: "Ar"
+date: '2022-07-19'
+output: pdf_document
+---
+
+# Need for validation of clusters 
+Clustering algorithms of designed such that they comeout with a given number of clusters even if the underlying data is devoid of any clusters.
+We will see a criterion to assess the clusters.
+
+## Within-groups sum of squared distances (WSS): 
+
+$$
+WSS_k =  \sum_{l=1}^k{\sum_{x_i \in {C_l}}{d^2(x_i, \overline{x_l})}}
+$$
+
+
+```{r}
+    
+```
