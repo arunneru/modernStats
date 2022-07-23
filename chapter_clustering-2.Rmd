@@ -6,7 +6,7 @@ output: pdf_document
 ---
 
 # Need for validation of clusters
-Hi Hello
+
 Clustering algorithms are designed such that they come out with a given number of clusters even if the underlying data is devoid of any such clusters.
 We will see a criterion to assess the credibility of the clusters produced by any clustering algorithm.
 
