@@ -6,6 +6,7 @@ output: pdf_document
 ---
 
 # Need for validation of clusters 
+
 Clustering algorithms are designed such that they come out with a given number of clusters even if the underlying data is devoid of any such clusters.
 We will see a criterion to assess the credibility of the clusters produced by any clustering algorithm.
 
@@ -20,35 +21,110 @@ We are interested in finding the *elbow* where there is a sudden drop in WSS_k a
 
 ```{r}
 library("dplyr")
-simdat = lapply(c(0,8), function(mx){
+simdat <- lapply(c(0, 8), function(mx) {
+    lapply(c(0, 8), function(my) {
+        tibble(
+            x = rnorm(100, mean = mx, sd = 2),
+            y = rnorm(100, mean = my, sd = 2),
+            class = paste(mx, my, sep = ":")
+        )
+    }) %>% bind_rows()
+}) %>% bind_rows()
 
-lapply(c(0,8), function(my){
-tibble( x = rnorm(100, mean=mx, sd=2),
-        y  = rnorm(100, mean=my, sd=2),
-        class=paste(mx, my, sep=":"))
-
-}) %>% bind_rows
-
-}) %>% bind_rows
 simdat
 ```
 
+
+```{r}
+simdat.unif <- lapply(c(0, 8), function(mx) {
+    lapply(c(0, 8), function(my) {
+        tibble(
+            x = runif(100, min = min(simdat$x), max = max(simdat$x)),
+            y = runif(100, min = min(simdat$y), max = max(simdat$y)),
+            class = "unif"
+        )
+    }) %>% bind_rows()
+}) %>% bind_rows()
+
+```
+
+
 ```{r}
 library("tidyverse")
-simdatxy = simdat[, c("x", "y")]
-ggplot(simdat, aes(x=x, y=y, col=class))+geom_point()+coord_fixed()
+simdatxy <- simdat[, c("x", "y")]
+ggplot(simdat, aes(x = x, y = y, col = class)) +
+    geom_point() +
+    coord_fixed()
 ```
 
 ```{r}
-wss = tibble(k = 1:8, value = NA_real_)
-wss$value[1] = sum(scale(simdatxy, scale=FALSE)^2)
-for(i in 2:nrow(wss)){
-km = kmeans(simdatxy, centers = wss$k[i])
-wss
+simdatxy.unif <- simdat.unif[, c("x", "y")]
+ggplot(simdat.unif, aes(x = x, y = y, col = class)) +
+    geom_point() +
+    coord_fixed()
+```
 
+
+```{r}
+wss <- tibble(k = 1:8, value = NA_real_)
+wss$value[1] <- sum(scale(simdatxy, scale = FALSE)^2)
+for (i in 2:nrow(wss)) {
+    km <- kmeans(simdatxy, centers = wss$k[i])
+    wss$value[i] <- sum(km$withinss)
 }
+ggplot(wss, aes(x = k, y = value)) +
+    geom_col()
 ```
 
 ```{r}
-?tibble()
+wss <- tibble(k = 1:8, value = NA_real_)
+wss$value[1] <- sum(scale(simdatxy.unif, scale = FALSE)^2)
+for (i in 2:nrow(wss)) {
+    km <- kmeans(simdatxy.unif, centers = wss$k[i])
+    wss$value[i] <- sum(km$withinss)
+}
+ggplot(wss, aes(x = k, y = value)) +
+    geom_col()
 ```
+```{r}
+wss <- tibble(k = 1:8, value = NA_real_)
+wss$value[1] <- sum(scale(simdatxy, scale = FALSE)^2)
+for (i in 2:nrow(wss)) {
+    km <- kmeans(simdatxy, centers = wss$k[i])
+    wss$value[i] <- sum(km$withinss)
+}
+ggplot(wss, aes(x = k, y = value)) +
+    geom_col()
+```
+
+
+
+
+```{r}
+
+require(stats)
+x <- matrix(1:10, ncol = 2)
+centered.x <- scale(x, scale = FALSE)
+```
+
+
+```{r}
+simdatxy <- simdat[, c("x", "y")]
+```
+
+```{r}
+ggplot(simdat, aes(x = x, y = y, col = class) + geom_point() + coord_fixed()
+```
+
+
+```{r}
+summary(simdatxy)
+```
+
+
+```{r}
+
+```
+
+
+
