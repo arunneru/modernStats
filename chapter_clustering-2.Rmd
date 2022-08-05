@@ -5,8 +5,7 @@ date: '2022-07-19'
 output: pdf_document
 ---
 
-# Need for validation of clusters
-
+# Need for validation of clusters 
 Clustering algorithms are designed such that they come out with a given number of clusters even if the underlying data is devoid of any such clusters.
 We will see a criterion to assess the credibility of the clusters produced by any clustering algorithm.
 
@@ -36,6 +35,31 @@ simdat
 
 
 ```{r}
+library("tidyverse")
+simdatxy <- simdat[, c("x", "y")]
+ggplot(simdat, aes(x = x, y = y, col = class)) +
+    geom_point() +
+    coord_fixed()
+```
+```
+
+```{r}
+wss <- tibble(k = 1:8, value = NA_real_)
+wss$value[1] <- sum(scale(simdatxy, scale = FALSE)^2)
+for (i in 2:nrow(wss)) {
+    km <- kmeans(simdatxy, centers = wss$k[i])
+    wss$value[i] <- sum(km$withinss)
+}
+
+ggplot(wss, aes(x = k, y = value)) +
+    geom_col()
+```
+
+
+
+
+
+```{r}
 simdat.unif <- lapply(c(0, 8), function(mx) {
     lapply(c(0, 8), function(my) {
         tibble(
@@ -48,31 +72,16 @@ simdat.unif <- lapply(c(0, 8), function(mx) {
 
 ```
 
-```{r}
-library("tidyverse")
-simdatxy <- simdat[, c("x", "y")]
-ggplot(simdat, aes(x = x, y = y, col = class)) +
-    geom_point() +
-    coord_fixed()
-```
 
 ```{r}
 simdatxy.unif <- simdat.unif[, c("x", "y")]
 ggplot(simdat.unif, aes(x = x, y = y, col = class)) +
     geom_point() +
     coord_fixed()
-```
 
-```{r}
-wss <- tibble(k = 1:8, value = NA_real_)
-wss$value[1] <- sum(scale(simdatxy, scale = FALSE)^2)
-for (i in 2:nrow(wss)) {
-    km <- kmeans(simdatxy, centers = wss$k[i])
-    wss$value[i] <- sum(km$withinss)
-}
-ggplot(wss, aes(x = k, y = value)) +
-    geom_col()
-```
+
+
+
 
 ```{r}
 require(stats)
@@ -96,5 +105,15 @@ summary(simdatxy)
 
 
 ```{r}
-
+library("fpc")
+library("cluster")
+CH = tibble(
+  k = 2:8,
+  value = sapply(k, function(i) {
+    p = pam(simdatxy, i)
+    calinhara(simdatxy, p$cluster)
+  })
+)
+ggplot(CH, aes(x = k, y = value)) + geom_line() + geom_point() +
+  ylab("CH index")
 ```
