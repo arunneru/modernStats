@@ -18,9 +18,6 @@ $$
 where, $k$ is the number of clusters and within the l-th cluster $C_l$, $x_l$ is the centre of mass.
 We are interested in finding the *elbow* where there is a sudden drop in WSS_k as k is increased. 
 
-
-There was an issue with using just the WSS_k. Sometimes, there are more than one sudden drops (Try running the example with datasets that vary in the spread from the center of the chosen cluster). For some cases, there might be more than one drop. Normalizing the sum of WSS_k with a between cluster distance measure can alleviate this problem.
-
 ```{r}
 library("tidyverse")
 library("dplyr")
@@ -49,6 +46,17 @@ for (i in 2:nrow(wss)) {
 ggplot(wss, aes(x = k, y = value)) +
     geom_col()
 ```
+
+## Calinski-Harabasz index
+
+There was an issue with using just the WSS_k. Sometimes, there are more than one sudden drops (Try running the example with datasets that vary in the spread from the center of the chosen cluster). For some cases, there might be more than one drop. 
+
+
+$$
+CH(k) =  {BSS_k \over WSS_k} \times { N-k \over N-1} \ \  where \ \ BSS_k = \sum_{l=1}^k{n_l(\bar{x_l}-\bar{x})^2}
+$$
+
+
 
 
 ```{r}
