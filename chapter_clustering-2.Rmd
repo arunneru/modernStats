@@ -2,10 +2,18 @@
 title: "chapter-clustering-validation"
 author: "Ar"
 date: '2022-07-19'
-output: pdf_document
+output:
+  pdf_document:   
+    fig_caption: yes
 ---
 
-# Need for validation of clusters 
+```{r setup, include=FALSE} 
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+
+## Need for validation of clusters 
+
 Clustering algorithms are designed such that they come out with a given number of clusters even if the underlying data is devoid of any such clusters.
 We will see a criterion to assess the credibility of the clusters produced by any clustering algorithm.
 
@@ -13,12 +21,12 @@ We will see a criterion to assess the credibility of the clusters produced by an
 
 $$
 WSS_k =  \sum_{l=1}^k{\sum_{x_i \in {C_l}}{d^2(x_i, \overline{x_l})}}
-$$
+$$1
 
 where, $k$ is the number of clusters and within the l-th cluster $C_l$, $x_l$ is the centre of mass.
 We are interested in finding the *elbow* where there is a sudden drop in WSS_k as k is increased. 
 
-```{r}
+```{r fig1, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig1} simulated (fake) data with six clusters."}
 library("tidyverse")
 library("dplyr")
 simdat <- lapply(c(0, 5), function(mx) {
@@ -36,6 +44,9 @@ ggplot(simdat, aes(x = x, y = y, col = class)) +
     geom_point() +
     coord_fixed()
 
+```
+
+```{r fig2, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig2} Reduction of within group distance with number of clusters."}
 wss <- tibble(k = 1:12, value = NA_real_)
 wss$value[1] <- sum(scale(simdatxy, scale = FALSE)^2)
 for (i in 2:nrow(wss)) {
@@ -49,7 +60,7 @@ ggplot(wss, aes(x = k, y = value)) +
 
 ## Calinski-Harabasz index
 
-There was an issue with using just the WSS_k. Sometimes, there are more than one sudden drops (Try running the example with datasets that vary in the spread from the center of the chosen cluster). For some cases, there might be more than one drop. 
+There was an issue with using just the WSS_k. Sometimes, there are more than one sudden drops (Try running the example with datasets that vary in the spread from the center of the chosen cluster). For some cases, there might be more than one drop. The Calinski-Harabasz index overcomes this problem by taking into consideration the distance between the clusters as well. The formula for the CH index is as follows.   
 
 
 $$
@@ -59,11 +70,11 @@ $$
 
 
 
-```{r}
+```{r fig3, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig3} The peak of CH index imply an inherent structure to the data. Notice the peak when the number of clusters is six."}
 library("fpc")
 library("cluster")
 CH = tibble(
-  k = 2:12,
+  k = 2:8,
   value = sapply(k, function(i) {
     p = pam(simdatxy, i)
     calinhara(simdatxy, p$cluster)
@@ -80,18 +91,6 @@ simdat
 
 
 ```{r}
-reference.source <-  lapply(1:20, function(i){tibble(
-            x = runif(900, min = min(simdat$x), max = max(simdat$x)),
-            y = runif(900, min = min(simdat$y), max = max(simdat$y)),
-            class = "unif"
-        )} )
-
-```
-
-```{r}
-ggplot(reference.source[[8]], aes(x=x, y=y))+geom_point()
-```
-```{r}
 library("cluster")
 ```
 
@@ -100,11 +99,12 @@ library("cluster")
 pamfun = function(x, k)
   list(cluster=pam(x,k,cluster.only = TRUE))
 
-gss=clusGap(simdatxy, FUN=pamfun, K.max=12, B=50, verbose=FALSE)
+gss=clusGap(simdatxy, FUN=pamfun, K.max=8, B=50, verbose=FALSE)
 
 gss
 
 ```
+
 ```{r}
 plot_gap = function(x){
   
@@ -117,17 +117,18 @@ plot_gap = function(x){
 ```
 
 
-```{r}
+```{r fig4, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig4} A peak in gap statistic also indicate a six-clustered structure."}
 plot_gap(gss)
 ```
 
 
+## Verifying the absence of *elbow* in data with no clusters
 
-
+Here the clustering algorithm is run on a data that shares the range with the previous data (with six clusters) but has no inherent structure to it. The samples were drawn from uniform distribution.
 
 ```{r}
-simdat.unif <- lapply(c(0, 8), function(mx) {
-    lapply(c(0, 8), function(my) {
+simdat.unif <- lapply(c(0, 5), function(mx) {
+    lapply(c(0, 5, 10), function(my) {
         tibble(
             x = runif(100, min = min(simdat$x), max = max(simdat$x)),
             y = runif(100, min = min(simdat$y), max = max(simdat$y)),
@@ -139,14 +140,14 @@ simdat.unif <- lapply(c(0, 8), function(mx) {
 ```
 
 
-```{r}
+```{r fig5, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig5} Simulated data with no inherent structure."}
 simdatxy.unif <- simdat.unif[, c("x", "y")]
 ggplot(simdat.unif, aes(x = x, y = y, col = class)) +
     geom_point() +
     coord_fixed()
 ```
 
-```{r}
+```{r fig6, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig6} Reduction of within cluster summed-distances show no indication of any elbow ."}
 wss.unif <- tibble(k = 1:8, value = NA_real_)
 wss.unif$value[1] <- sum(scale(simdatxy.unif, scale = FALSE)^2)
 for (i in 2:nrow(wss.unif)) {
@@ -158,6 +159,22 @@ ggplot(wss.unif, aes(x = k, y = value)) +
     geom_col()
 ```
 
+## Verifying the absence of *peaks* above standard-errors of neighbouring values in data with no clusters
 
+```{r fig7, echo=FALSE, fig.width=6,fig.height=8,fig.cap="\\label{fig:fig7} Absence of peak in the graph of gap statistic as a function of the number of clusters."}
 
+gss=clusGap(simdatxy.unif, FUN=pamfun, K.max=8, B=50, verbose=FALSE)
+
+plot_gap = function(x){
+  
+  gstab = data.frame(x$Tab, k=seq_len(nrow(x$Tab)))
+  ggplot(gstab, aes(k, gap))+geom_line()+
+    geom_errorbar(aes(ymax=gap+SE.sim,
+                      ymin=gap-SE.sim), width=0.1)+
+    geom_point(size=3, col="red")
+}
+plot_gap(gss)
+```
+
+As the Figure \ref{fig:fig7} shows, for dataset with no inherent structure, there is no peak in the graph of gap statistic as a function of the number of clusters. Contrast this with the graph shown in Figure \ref{fig:fig4}
 
