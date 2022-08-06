@@ -21,7 +21,7 @@ We are interested in finding the *elbow* where there is a sudden drop in WSS_k a
 ```{r}
 library("tidyverse")
 library("dplyr")
-simdat <- lapply(c(0, 5, 10), function(mx) {
+simdat <- lapply(c(0, 5), function(mx) {
     lapply(c(0, 5, 10), function(my) {
         tibble(
             x = rnorm(100, mean = mx, sd = 1),
