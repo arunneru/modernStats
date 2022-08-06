@@ -18,33 +18,28 @@ $$
 where, $k$ is the number of clusters and within the l-th cluster $C_l$, $x_l$ is the centre of mass.
 We are interested in finding the *elbow* where there is a sudden drop in WSS_k as k is increased. 
 
+
+There was an issue with using just the WSS_k. Sometimes, there are more than one sudden drops (Try running the example with datasets that vary in the spread from the center of the chosen cluster). For some cases, there might be more than one drop. Normalizing the sum of WSS_k with a between cluster distance measure can alleviate this problem.
+
 ```{r}
+library("tidyverse")
 library("dplyr")
-simdat <- lapply(c(0, 8), function(mx) {
-    lapply(c(0, 8), function(my) {
+simdat <- lapply(c(0, 5, 10), function(mx) {
+    lapply(c(0, 5, 10), function(my) {
         tibble(
-            x = rnorm(100, mean = mx, sd = 2),
-            y = rnorm(100, mean = my, sd = 2),
+            x = rnorm(100, mean = mx, sd = 1),
+            y = rnorm(100, mean = my, sd = 1),
             class = paste(mx, my, sep = ":")
         )
     }) %>% bind_rows()
 }) %>% bind_rows()
 
-simdat
-```
-
-
-```{r}
-library("tidyverse")
 simdatxy <- simdat[, c("x", "y")]
 ggplot(simdat, aes(x = x, y = y, col = class)) +
     geom_point() +
     coord_fixed()
-```
-```
 
-```{r}
-wss <- tibble(k = 1:8, value = NA_real_)
+wss <- tibble(k = 1:12, value = NA_real_)
 wss$value[1] <- sum(scale(simdatxy, scale = FALSE)^2)
 for (i in 2:nrow(wss)) {
     km <- kmeans(simdatxy, centers = wss$k[i])
@@ -53,6 +48,69 @@ for (i in 2:nrow(wss)) {
 
 ggplot(wss, aes(x = k, y = value)) +
     geom_col()
+```
+
+
+```{r}
+library("fpc")
+library("cluster")
+CH = tibble(
+  k = 2:12,
+  value = sapply(k, function(i) {
+    p = pam(simdatxy, i)
+    calinhara(simdatxy, p$cluster)
+  })
+)
+ggplot(CH, aes(x = k, y = value)) + geom_line() + geom_point() +
+  ylab("CH index")
+```
+
+```{r}
+simdat
+```
+
+
+
+```{r}
+reference.source <-  lapply(1:20, function(i){tibble(
+            x = runif(900, min = min(simdat$x), max = max(simdat$x)),
+            y = runif(900, min = min(simdat$y), max = max(simdat$y)),
+            class = "unif"
+        )} )
+
+```
+
+```{r}
+ggplot(reference.source[[8]], aes(x=x, y=y))+geom_point()
+```
+```{r}
+library("cluster")
+```
+
+
+```{r}
+pamfun = function(x, k)
+  list(cluster=pam(x,k,cluster.only = TRUE))
+
+gss=clusGap(simdatxy, FUN=pamfun, K.max=12, B=50, verbose=FALSE)
+
+gss
+
+```
+```{r}
+plot_gap = function(x){
+  
+  gstab = data.frame(x$Tab, k=seq_len(nrow(x$Tab)))
+  ggplot(gstab, aes(k, gap))+geom_line()+
+    geom_errorbar(aes(ymax=gap+SE.sim,
+                      ymin=gap-SE.sim), width=0.1)+
+    geom_point(size=3, col="red")
+}
+```
+
+
+```{r}
+plot_gap(gss)
 ```
 
 
@@ -67,7 +125,7 @@ simdat.unif <- lapply(c(0, 8), function(mx) {
             y = runif(100, min = min(simdat$y), max = max(simdat$y)),
             class = "unif"
         )
-    }) %>% bind_rows()jumping to the next codeblock in vs code
+    }) %>% bind_rows()
 }) %>% bind_rows()
 
 ```
@@ -78,42 +136,20 @@ simdatxy.unif <- simdat.unif[, c("x", "y")]
 ggplot(simdat.unif, aes(x = x, y = y, col = class)) +
     geom_point() +
     coord_fixed()
-
-
-
-
-
-```{r}
-require(stats)
-x <- matrix(1:10, ncol = 2)
-centered.x <- scale(x, scale = FALSE)
-```
-
-
-```{r}
-simdatxy <- simdat[, c("x", "y")]
 ```
 
 ```{r}
-ggplot(simdat, aes(x = x, y = y, col = class)) + geom_point() + coord_fixed()
+wss.unif <- tibble(k = 1:8, value = NA_real_)
+wss.unif$value[1] <- sum(scale(simdatxy.unif, scale = FALSE)^2)
+for (i in 2:nrow(wss.unif)) {
+    km <- kmeans(simdatxy.unif, centers = wss.unif$k[i])
+    wss.unif$value[i] <- sum(km$withinss)
+}
+
+ggplot(wss.unif, aes(x = k, y = value)) +
+    geom_col()
 ```
 
 
-```{r}
-summary(simdatxy)
-```
 
 
-```{r}
-library("fpc")
-library("cluster")
-CH = tibble(
-  k = 2:8,
-  value = sapply(k, function(i) {
-    p = pam(simdatxy, i)
-    calinhara(simdatxy, p$cluster)
-  })
-)
-ggplot(CH, aes(x = k, y = value)) + geom_line() + geom_point() +
-  ylab("CH index")
-```
